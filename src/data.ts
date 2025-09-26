@@ -1,13 +1,10 @@
 import { FieldTypeName } from "./field_types";
-import { getSchemaFromJSON } from "./schema";
 import type { SchemaField } from "./schema";
 
 // Cleans the data into the field types
-export function cleanData(data: any[]): any[] {
-  const schema: SchemaField[] = getSchemaFromJSON(data);
-
-  // Ideally these helpers would be in field_types.ts but I'm crunched for time
-  // in this project
+export function cleanData(data: any[], schema: SchemaField[]): any[] {
+  // Ideally these helpers would be in field_types.ts 
+  // but I'm crunched for time in this project
   const toNullIfEmpty = (v: any) => {
     if (v === undefined) return null;
     if (v === null) return null;
@@ -106,20 +103,22 @@ export function cleanData(data: any[]): any[] {
 
 // Filters cleaned data based on a single condition
 export function filterData(
-  data: any[],
+  data: Record<string, unknown>[],
   fieldName: string,
   operator: "eq" | "gt" | "lt",
-  value: number,
+  value: number | string,
 ): any[] {
   return data.filter((item) => {
     const v = item[fieldName];
-    if (typeof v !== "number") return false;
+
     switch (operator) {
       case "eq":
         return v === value;
       case "gt":
+        if (typeof v !== "number" || typeof value !== "number") return false;
         return v > value;
       case "lt":
+        if (typeof v !== "number" || typeof value !== "number") return false;
         return v < value;
       default:
         return false;

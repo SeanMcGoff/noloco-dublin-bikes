@@ -11,9 +11,9 @@ const port = 3000;
 const data = require("./data/dublin-bikes.json");
 
 const operatorObj = z.union([
-  z.object({ eq: z.number() }),
-  z.object({ gt: z.number() }),
-  z.object({ lt: z.number() }),
+  z.object({ eq: z.union([z.string(),z.number()]) }),
+  z.object({ gt: z.union([z.string(),z.number()]) }),
+  z.object({ lt: z.union([z.string(),z.number()]) }),
 ]);
 
 const querySchema = z.object({
@@ -42,28 +42,49 @@ app.post("/data", express.json(), (req, res) => {
     // Runtime guard
     const entries = Object.entries(parsed.where);
 
-    const first = entries[0]!;
-    const [fieldName, opObj] = first;
-    const operator = Object.keys(opObj)[0] as "eq" | "gt" | "lt";
-    const value = (opObj as any)[operator] as number;
-
     const schema: SchemaField[] = getSchemaFromJSON(data);
-    if (
-      !schema.find(
-        (f) =>
-          f.name === fieldName && (f.type === "INTEGER" || f.type === "FLOAT"),
-      )
-    ) {
-      return res.status(400).json({
-        error: `Field ${fieldName} of type INTEGER or FLOAT does not exist`,
-      });
+
+    // Validate all requested fields exist and are numeric (if gt/lt)
+    for (const [fieldName, opObj] of entries) {
+      const operator = Object.keys(opObj)[0] as "eq" | "gt" | "lt";
+      const value = (opObj as any)[operator] as number;
+
+      if (
+        !schema.find(
+          (f) =>
+            f.name === fieldName &&
+            // Equality can be any type, but gt/lt must be numeric
+            (operator === "eq" || f.type === "INTEGER" || f.type === "FLOAT"),
+        )
+      ) {
+        return res.status(400).json({
+          error: `Field ${fieldName} not found or cannot be used with operator ${operator}`,
+        });
+      }
+
+      if (operator !== "eq" && typeof value !== "number") {
+        return res.status(400).json({
+          error: `Invalid value for field ${fieldName}`,
+        });
+      }
     }
 
-    const cleaned = cleanData(data);
-    const filtered = filterData(cleaned, fieldName, operator, value);
+    // Clean the data according to the inferred schema
+    const cleaned = cleanData(data, schema);
+
+    // Apply all filters in sequence
+    // Ideally this would be done in a single pass for performance, but alas,
+    // time is limited.
+    let filtered = cleaned;
+    for (const [fieldName, opObj] of entries) {
+      const operator = Object.keys(opObj)[0] as "eq" | "gt" | "lt";
+      const value = (opObj as any)[operator] as number;
+      filtered = filterData(filtered, fieldName, operator, value);
+    }
 
     return res.json(filtered);
   } catch (err) {
+    // Handle Zod validation errors
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: err.message });
     }
