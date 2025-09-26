@@ -2,7 +2,8 @@
 
 ## Running
 
-This project uses *bun* as its runtime. To run the server, type:
+This project uses _bun_ as its runtime. To run the server, type:
+
 ```
 bun start
 ```
