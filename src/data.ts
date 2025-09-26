@@ -3,7 +3,7 @@ import type { SchemaField } from "./schema";
 
 // Cleans the data into the field types
 export function cleanData(data: any[], schema: SchemaField[]): any[] {
-  // Ideally these helpers would be in field_types.ts 
+  // Ideally these helpers would be in field_types.ts
   // but I'm crunched for time in this project
   const toNullIfEmpty = (v: any) => {
     if (v === undefined) return null;

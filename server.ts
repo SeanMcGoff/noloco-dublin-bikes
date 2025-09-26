@@ -11,9 +11,9 @@ const port = 3000;
 const data = require("./data/dublin-bikes.json");
 
 const operatorObj = z.union([
-  z.object({ eq: z.union([z.string(),z.number()]) }),
-  z.object({ gt: z.union([z.string(),z.number()]) }),
-  z.object({ lt: z.union([z.string(),z.number()]) }),
+  z.object({ eq: z.union([z.string(), z.number()]) }),
+  z.object({ gt: z.union([z.string(), z.number()]) }),
+  z.object({ lt: z.union([z.string(), z.number()]) }),
 ]);
 
 const querySchema = z.object({

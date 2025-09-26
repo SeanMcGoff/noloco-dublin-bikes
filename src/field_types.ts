@@ -97,7 +97,7 @@ export function getFieldTypeFromValues(values: JSONValue[]): InferenceResult {
   const mappedNonNull = nonNull.map((v) => String(v).trim().toLowerCase());
   const unique = Array.from(new Set(mappedNonNull));
   // Arbitrary limit of 10 unique options to consider as OPTION type
-  if (unique.length >= 2 && unique.length <= 10) {
+  if (unique.length <= 10) {
     return [FieldTypeName.OPTION, unique];
   }
 
